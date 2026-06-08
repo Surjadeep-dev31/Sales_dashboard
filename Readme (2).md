@@ -172,4 +172,4 @@ To retheme the dashboard, update these variables — all components inherit from
 
 ## 📄 License
 
-This project was built as a front-end assessment submission. Free to use, modify, and extend.
+This project was built as a front-end assessment submission.
