@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SalesMatrix — Dashboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- Background canvas for animated particle grid -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="12" height="12" rx="2" fill="var(--accent-cyan)"/>
+          <rect x="18" y="2" width="12" height="12" rx="2" fill="var(--accent-gold)" opacity="0.7"/>
+          <rect x="2" y="18" width="12" height="12" rx="2" fill="var(--accent-gold)" opacity="0.7"/>
+          <rect x="18" y="18" width="12" height="12" rx="2" fill="var(--accent-cyan)" opacity="0.4"/>
+        </svg>
+      </div>
+      <span class="logo-text">Sales<strong>Matrix</strong></span>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="#" class="nav-item active" data-view="dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>Dashboard</span>
+      </a>
+      <a href="#" class="nav-item" data-view="analytics">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+        <span>Analytics</span>
+      </a>
+      <a href="#" class="nav-item" data-view="products">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>Products</span>
+      </a>
+      <a href="#" class="nav-item" data-view="regions">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span>Regions</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="data-source-badge">
+        <span class="pulse-dot"></span>
+        <span>Kaggle Dataset</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content" id="main-content">
+
+    <!-- Top Header Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" id="hamburger" aria-label="Toggle sidebar">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="page-title">
+          <h1 id="page-heading">Dashboard Overview</h1>
+          <p id="page-subtitle">Global sales performance across 2022–2024</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <!-- Year Filter -->
+        <div class="year-filter-group">
+          <button class="year-btn active" data-year="all">All Years</button>
+          <button class="year-btn" data-year="2022">2022</button>
+          <button class="year-btn" data-year="2023">2023</button>
+          <button class="year-btn" data-year="2024">2024</button>
+        </div>
+        <!-- Custom Threshold -->
+        <div class="threshold-input-wrapper">
+          <label>Threshold $</label>
+          <input type="number" id="threshold-input" placeholder="e.g. 50000" min="0" />
+          <button id="apply-threshold">Apply</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- KPI Cards Row -->
+    <section class="kpi-section" id="kpi-section">
+      <div class="kpi-card" id="kpi-revenue">
+        <div class="kpi-icon cyan">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Revenue</span>
+          <span class="kpi-value" data-target="0">$0</span>
+          <span class="kpi-delta positive">+12.4%</span>
+        </div>
+        <div class="kpi-sparkline"><canvas id="spark-revenue"></canvas></div>
+      </div>
+      <div class="kpi-card" id="kpi-orders">
+        <div class="kpi-icon gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Total Orders</span>
+          <span class="kpi-value" data-target="0">0</span>
+          <span class="kpi-delta positive">+8.1%</span>
+        </div>
+        <div class="kpi-sparkline"><canvas id="spark-orders"></canvas></div>
+      </div>
+      <div class="kpi-card" id="kpi-avg">
+        <div class="kpi-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Avg Order Value</span>
+          <span class="kpi-value" data-target="0">$0</span>
+          <span class="kpi-delta negative">-2.3%</span>
+        </div>
+        <div class="kpi-sparkline"><canvas id="spark-avg"></canvas></div>
+      </div>
+      <div class="kpi-card" id="kpi-customers">
+        <div class="kpi-icon red">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Customers</span>
+          <span class="kpi-value" data-target="0">0</span>
+          <span class="kpi-delta positive">+5.7%</span>
+        </div>
+        <div class="kpi-sparkline"><canvas id="spark-customers"></canvas></div>
+      </div>
+    </section>
+
+    <!-- Chart Controls & Main Charts -->
+    <section class="charts-section">
+      <div class="chart-card large" id="main-chart-card">
+        <div class="chart-card-header">
+          <div>
+            <h2>Revenue Trend</h2>
+            <p class="chart-subtitle">Monthly performance by year</p>
+          </div>
+          <div class="chart-type-switcher">
+            <button class="chart-type-btn active" data-type="line">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+              Line
+            </button>
+            <button class="chart-type-btn" data-type="bar">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="4" height="14"/><rect x="9" y="4" width="4" height="17"/><rect x="16" y="2" width="4" height="19"/></svg>
+              Bar
+            </button>
+            <button class="chart-type-btn" data-type="area">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17L9 11l4 4 8-8"/><path d="M3 17h18v3H3z" fill="currentColor" opacity="0.3"/></svg>
+              Area
+            </button>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="main-chart"></canvas>
+          <div class="threshold-line" id="threshold-line" style="display:none;">
+            <span class="threshold-label">Threshold</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="chart-card medium" id="donut-card">
+        <div class="chart-card-header">
+          <div>
+            <h2>Sales by Category</h2>
+            <p class="chart-subtitle">Product mix breakdown</p>
+          </div>
+        </div>
+        <div class="chart-wrapper donut-wrapper">
+          <canvas id="donut-chart"></canvas>
+          <div class="donut-center-label">
+            <span id="donut-total-label">Total</span>
+            <strong id="donut-total-value">—</strong>
+          </div>
+        </div>
+        <div class="donut-legend" id="donut-legend"></div>
+      </div>
+    </section>
+
+    <!-- Second Row: Regional + Product Table -->
+    <section class="bottom-section">
+      <div class="chart-card" id="regional-card">
+        <div class="chart-card-header">
+          <div>
+            <h2>Regional Performance</h2>
+            <p class="chart-subtitle">Revenue by geography</p>
+          </div>
+        </div>
+        <div class="chart-wrapper">
+          <canvas id="regional-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card table-card" id="products-card">
+        <div class="chart-card-header">
+          <div>
+            <h2>Top Products</h2>
+            <p class="chart-subtitle">Ranked by total revenue</p>
+          </div>
+          <input type="text" id="product-search" placeholder="Search products…" class="table-search" />
+        </div>
+        <div class="table-wrapper">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Revenue</th>
+                <th>Growth</th>
+                <th>Bar</th>
+              </tr>
+            </thead>
+            <tbody id="products-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Year Comparison Cards -->
+    <section class="year-comparison-section">
+      <h2 class="section-heading">Year-by-Year Snapshot</h2>
+      <div class="year-cards-row" id="year-cards-row">
+        <!-- populated by JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Tooltip (global) -->
+  <div class="custom-tooltip" id="custom-tooltip"></div>
+
+  <!-- Threshold Alert Banner -->
+  <div class="alert-banner" id="alert-banner"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
